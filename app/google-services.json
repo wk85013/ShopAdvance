@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "45728747694",
+    "firebase_url": "https://shopadvance-8fe67.firebaseio.com",
+    "project_id": "shopadvance-8fe67",
+    "storage_bucket": "shopadvance-8fe67.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:45728747694:android:bbf6164b2ffb6719",
+        "android_client_info": {
+          "package_name": "ute.com.shopadvance"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "45728747694-27enijd3pcd35tncrbv2r5r4mu18nqsq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ute.com.shopadvance",
+            "certificate_hash": "f882eb321f8c7373fdc1accbfb766f7db732cca3"
+          }
+        },
+        {
+          "client_id": "45728747694-vvdap92gh7sqa8eklo9miube8qpp29jb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC9nQtJ77HGr7hUtlyXqZbVbHbuitladeA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "45728747694-vvdap92gh7sqa8eklo9miube8qpp29jb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
