@@ -1,7 +1,5 @@
 package ute.com.shopadvance
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import com.google.android.material.snackbar.Snackbar
@@ -10,10 +8,13 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AlertDialog
+import com.firebase.ui.auth.AuthMethodPickerLayout
+import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import java.util.*
 
 class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
 
@@ -63,12 +64,12 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
 
     override fun onStart() {
         super.onStart()
-        FirebaseAuth.getInstance().addAuthStateListener (this)//Auth狀態傾聽器
+        FirebaseAuth.getInstance().addAuthStateListener(this)//Auth狀態傾聽器
     }
 
     override fun onStop() {
         super.onStop()
-        FirebaseAuth.getInstance().removeAuthStateListener (this)
+        FirebaseAuth.getInstance().removeAuthStateListener(this)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -89,9 +90,35 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
                 true
             }
             R.id.action_signin -> {
-                startActivityForResult(Intent(this, SigninActivity::class.java), RC_SIGNIN)
+//                startActivityForResult(Intent(this, SigninActivity::class.java), RC_SIGNIN)
+                val whiteList = listOf("tw", "hk")
+                //客製登入畫面
+                val customSignupLayout = AuthMethodPickerLayout.Builder(R.layout.sign_up_layout)
+                    .setEmailButtonId(R.id.btn_signup_email)
+                    .setFacebookButtonId(R.id.btn_signup_facebook)
+                    .setGoogleButtonId(R.id.btn_signup_google)
+                    .setPhoneButtonId(R.id.btn_signup_sms)
+                    .build()
+                val intent = AuthUI.getInstance().createSignInIntentBuilder()
+                    .setAvailableProviders(
+                        Arrays.asList(
+                            AuthUI.IdpConfig.EmailBuilder().build(),//EMAIL登入
+                            AuthUI.IdpConfig.GoogleBuilder().build(),//GOOGLE帳號登入
+                            AuthUI.IdpConfig.FacebookBuilder().build(),//FACEBOOK帳號登入
+                            AuthUI.IdpConfig.PhoneBuilder().setDefaultCountryIso("tw").//預設國家
+                                setWhitelistedCountries(whiteList).//可用國家白名單
+                                build()//簡訊登入
 
+                        )
+                    )
+                    .setIsSmartLockEnabled(false)
+                    .setLogo(android.R.drawable.ic_menu_save)//LOGO
+                    .setTheme(R.style.SignUp)//顏色樣式
+                    .setAuthMethodPickerLayout(customSignupLayout)//客製登入畫面
+                    .build()
+                startActivityForResult(intent, RC_SIGNIN)
                 true
+
             }
             else -> super.onOptionsItemSelected(item)
         }

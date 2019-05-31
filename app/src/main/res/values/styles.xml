@@ -14,4 +14,12 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar"/>
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light"/>
 
+    <style name="SignUp" parent="FirebaseUI">
+        <item name="colorPrimary">@android:color/holo_blue_light</item>
+        <item name="colorPrimaryDark">@android:color/holo_green_dark</item>
+        <item name="colorAccent">@android:color/holo_orange_light</item>
+        <item name="colorControlActivated">@android:color/holo_blue_dark</item>
+
+
+    </style>
 </resources>
