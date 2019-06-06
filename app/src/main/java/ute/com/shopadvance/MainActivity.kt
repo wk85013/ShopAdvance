@@ -1,16 +1,19 @@
 package ute.com.shopadvance
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.*
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity;
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
 import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.firebase.ui.auth.AuthMethodPickerLayout
 import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.firestore.FirestoreRecyclerAdapter
+import com.firebase.ui.firestore.FirestoreRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -21,6 +24,7 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
 
     private val TAGG: String? = MainActivity::class.java.simpleName
     private val RC_SIGNIN: Int = 100
+    private lateinit var adapter: FirestoreRecyclerAdapter<Item, ItemHolder>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +52,45 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
 
             }
         }
+
+
+        //setup REcyclerView
+        recycler.setHasFixedSize(true)
+        recycler.layoutManager = LinearLayoutManager(this)
+        //使用FireStore取得資料庫內資料
+        val query = FirebaseFirestore.getInstance()
+            .collection("items")//collection名稱
+            .limit(10)//限制筆數
+
+        val options = FirestoreRecyclerOptions.Builder<Item>()
+            .setQuery(query, Item::class.java)
+            .build()
+        adapter = object : FirestoreRecyclerAdapter<Item, ItemHolder>(options) {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
+                val view = LayoutInflater.from(parent.context).inflate(R.layout.item_row, parent, false)
+                return ItemHolder(view)
+            }
+
+            override fun onBindViewHolder(holder: ItemHolder, position: Int, item: Item) {
+                item.id = snapshots.getSnapshot(position).id//取得該項目ID值
+
+                holder.bintTo(item)
+                holder.itemView.setOnClickListener {
+                    itemClicked(item, position)
+
+                }
+            }
+        }
+        recycler.adapter = adapter
+    }
+
+    private fun itemClicked(item: Item, position: Int) {
+        Log.i(TAGG, ": ${item.title} / $position");
+        val intent = Intent(this, DetailActivity::class.java)
+        intent.putExtra("ITEM", item)//已實作Parcelable，所以可以傳送指定Object
+        startActivity(intent)
+
+
     }
 
     override fun onAuthStateChanged(auth: FirebaseAuth) {
@@ -65,11 +108,13 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
     override fun onStart() {
         super.onStart()
         FirebaseAuth.getInstance().addAuthStateListener(this)//Auth狀態傾聽器
+        adapter.startListening()
     }
 
     override fun onStop() {
         super.onStop()
         FirebaseAuth.getInstance().removeAuthStateListener(this)
+        adapter.stopListening()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

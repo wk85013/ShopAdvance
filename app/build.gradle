@@ -43,4 +43,12 @@ dependencies {
     implementation 'com.firebaseui:firebase-ui-storage:5.0.0'
     //facebook SDK
     implementation 'com.facebook.android:facebook-android-sdk:[4,5)'
+    implementation 'androidx.recyclerview:recyclerview:1.0.0'
+
+    /*
+    * keytool -exportcert -alias androiddebugkey -keystore ~/.android/debug.keystore | openssl sha1 -binary | openssl base64
+    * */
+}
+androidExtensions {//實作Parcelable
+    experimental = true
 }
