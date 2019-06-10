@@ -4,16 +4,22 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.firebase.ui.auth.AuthMethodPickerLayout
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.firestore.FirestoreRecyclerAdapter
 import com.firebase.ui.firestore.FirestoreRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -24,7 +30,10 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
 
     private val TAGG: String? = MainActivity::class.java.simpleName
     private val RC_SIGNIN: Int = 100
-    private lateinit var adapter: FirestoreRecyclerAdapter<Item, ItemHolder>
+    //    private lateinit var adapter: FirestoreRecyclerAdapter<Item, ItemHolder>
+    var catagories = mutableListOf<Catagory>()
+    lateinit var adapter: ItemAdapter
+    lateinit var itemViewModel: ItemViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,14 +62,96 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
             }
         }
 
+        //下拉式選單
+        FirebaseFirestore.getInstance().collection("catagories")
+            .get().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    task.result?.let {
+                        catagories.add(Catagory("", "不分類"))
+                        for (doc in it) {
+                            catagories.add(Catagory(doc.id, doc.data.get("name").toString()))
+                        }
+                        spinner.adapter = ArrayAdapter<Catagory>(
+                            this@MainActivity,
+                            android.R.layout.simple_spinner_item,
+                            catagories
+                        ).apply {
+                            setDropDownViewResource(android.R.layout.simple_dropdown_item_1line)
+                        }
+                        spinner.setSelection(0, false)
+                        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                            override fun onNothingSelected(parent: AdapterView<*>?) {
+                                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                            }
+
+                            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+//                                setupAdapter()
+                                itemViewModel.setCatagory(catagories.get(position).id)
+                            }
+                        }
+                    }
+                }
+
+            }
+
 
         //setup REcyclerView
         recycler.setHasFixedSize(true)
         recycler.layoutManager = LinearLayoutManager(this)
-        //使用FireStore取得資料庫內資料
-        val query = FirebaseFirestore.getInstance()
-            .collection("items")//collection名稱
-            .limit(10)//限制筆數
+        adapter = ItemAdapter(mutableListOf<Item>())
+        recycler.adapter = adapter
+        itemViewModel = ViewModelProviders.of(this)//使用ViewModel
+            .get(ItemViewModel::class.java)
+        itemViewModel.getItems().observe(this, androidx.lifecycle.Observer {
+            Log.i(TAGG, "observe: ${it.size()}");
+            val list = mutableListOf<Item>()
+            for (doc in it.documents) {
+                val item = doc.toObject(Item::class.java) ?: Item()
+                item.id = doc.id
+                list.add(item)
+
+            }
+            adapter.items = list
+            adapter.notifyDataSetChanged()
+
+        })
+//        setupAdapter()
+    }
+
+    inner class ItemAdapter(var items: List<Item>) : RecyclerView.Adapter<ItemHolder>() {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
+            return ItemHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_row, parent, false))
+        }
+
+        override fun getItemCount(): Int {
+            return items.size
+        }
+
+        override fun onBindViewHolder(holder: ItemHolder, position: Int) {
+            holder.bintTo(items.get(position))
+            holder.itemView.setOnClickListener {
+                itemClicked(items.get(position), position)
+
+            }
+        }
+    }
+
+/*    private fun setupAdapter() {
+        val selected = spinner.selectedItemPosition
+        val query = if (selected > 0) {
+            adapter.stopListening()
+            //使用FireStore取得資料庫內資料
+            FirebaseFirestore.getInstance()
+                .collection("items")//collection名稱
+                .whereEqualTo("catagory", catagories.get(selected).id)
+                .orderBy("viewCount", Query.Direction.DESCENDING)//排序,由大到小
+                .limit(10)//限制筆數
+        } else {
+            FirebaseFirestore.getInstance()
+                .collection("items")//collection名稱
+                .orderBy("viewCount", Query.Direction.DESCENDING)//排序,由大到小
+                .limit(10)//限制筆數
+        }
 
         val options = FirestoreRecyclerOptions.Builder<Item>()
             .setQuery(query, Item::class.java)
@@ -82,7 +173,8 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
             }
         }
         recycler.adapter = adapter
-    }
+        adapter.startListening()
+    }*/
 
     private fun itemClicked(item: Item, position: Int) {
         Log.i(TAGG, ": ${item.title} / $position");
@@ -108,13 +200,13 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
     override fun onStart() {
         super.onStart()
         FirebaseAuth.getInstance().addAuthStateListener(this)//Auth狀態傾聽器
-        adapter.startListening()
+//        adapter.startListening()
     }
 
     override fun onStop() {
         super.onStop()
         FirebaseAuth.getInstance().removeAuthStateListener(this)
-        adapter.stopListening()
+//        adapter.stopListening()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
