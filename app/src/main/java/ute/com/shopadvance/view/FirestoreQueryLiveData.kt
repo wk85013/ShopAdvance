@@ -1,9 +1,10 @@
-package ute.com.shopadvance
+package ute.com.shopadvance.view
 
 import androidx.lifecycle.LiveData
 import com.google.firebase.firestore.*
+import ute.com.shopadvance.model.Item
 
-class FirestoreQueryLiveData : LiveData<QuerySnapshot>(), EventListener<QuerySnapshot> {
+class FirestoreQueryLiveData : LiveData<List<Item>>(), EventListener<QuerySnapshot> {
     lateinit var registration: ListenerRegistration
     var query = FirebaseFirestore.getInstance()
         .collection("items")
@@ -26,7 +27,14 @@ class FirestoreQueryLiveData : LiveData<QuerySnapshot>(), EventListener<QuerySna
 
     override fun onEvent(querySnapshot: QuerySnapshot?, exception: FirebaseFirestoreException?) {
         if (querySnapshot != null && !querySnapshot.isEmpty) {
-            value = querySnapshot
+            val list = mutableListOf<Item>()
+            for (doc in querySnapshot.documents) {
+                val item = doc.toObject(Item::class.java) ?: Item()
+                item.id = doc.id
+                list.add(item)
+
+            }
+            value = list
         }
     }
 

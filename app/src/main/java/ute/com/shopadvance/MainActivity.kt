@@ -9,20 +9,20 @@ import android.widget.ArrayAdapter
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.firebase.ui.auth.AuthMethodPickerLayout
 import com.firebase.ui.auth.AuthUI
-import com.firebase.ui.firestore.FirestoreRecyclerAdapter
-import com.firebase.ui.firestore.FirestoreRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import ute.com.shopadvance.model.Catagory
+import ute.com.shopadvance.model.Item
+import ute.com.shopadvance.view.ItemHolder
+import ute.com.shopadvance.view.ItemViewModel
 import java.util.*
 
 class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
@@ -103,16 +103,17 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
         itemViewModel = ViewModelProviders.of(this)//使用ViewModel
             .get(ItemViewModel::class.java)
         itemViewModel.getItems().observe(this, androidx.lifecycle.Observer {
-            Log.i(TAGG, "observe: ${it.size()}");
-            val list = mutableListOf<Item>()
-            for (doc in it.documents) {
-                val item = doc.toObject(Item::class.java) ?: Item()
-                item.id = doc.id
-                list.add(item)
+            Log.i(TAGG, "observe: ${it.size}");
 
-            }
-            adapter.items = list
+            adapter.items = it
             adapter.notifyDataSetChanged()
+/*            list.forEach {
+                ItemDatabase.getDatabase(this)?.getItemDao()?.addItem(it)//使用ROOM寫入DB資料
+            }
+            ItemDatabase.getDatabase(this)?.getItemDao()?.getItems()?.forEach {//使用ROOM讀取DB資料
+                Log.i(TAGG, "Room:${it.id} / ${it.title} ");
+
+            }*/
 
         })
 //        setupAdapter()
@@ -120,7 +121,13 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
 
     inner class ItemAdapter(var items: List<Item>) : RecyclerView.Adapter<ItemHolder>() {
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemHolder {
-            return ItemHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_row, parent, false))
+            return ItemHolder(
+                LayoutInflater.from(parent.context).inflate(
+                    R.layout.item_row,
+                    parent,
+                    false
+                )
+            )
         }
 
         override fun getItemCount(): Int {
