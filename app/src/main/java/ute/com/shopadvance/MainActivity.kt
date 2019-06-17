@@ -16,6 +16,7 @@ import com.firebase.ui.auth.AuthMethodPickerLayout
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.iid.FirebaseInstanceId
 
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -198,6 +199,20 @@ class MainActivity : AppCompatActivity(), FirebaseAuth.AuthStateListener {
         if (user != null) {
             user_info.setText("Email:${user.email} / ${user.isEmailVerified}")//驗證EMAIL
             verify_email.visibility = if (user.isEmailVerified) View.GONE else View.VISIBLE
+
+            //取得FCM token
+            FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.i(TAGG, "FCM token: ${task.result?.token}");
+                    //寫入指定USER token
+                    FirebaseFirestore.getInstance()
+                        .collection("users")
+                        .document(user.uid)
+                        .set(mapOf("token" to task.result?.token))
+                }
+
+
+            }
         } else {
             user_info.setText("Not login")
             verify_email.visibility = View.GONE
